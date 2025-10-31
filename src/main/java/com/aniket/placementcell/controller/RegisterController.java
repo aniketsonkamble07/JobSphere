@@ -37,7 +37,7 @@ public class RegisterController {
 
 @RequiredArgsConstructor
 @Controller
-@RequestMapping("/pvg")
+@RequestMapping("/pvg/student/")
 public class RegisterController
 {
     private final RegisterStudentService service; // No @Autowired needed with RequiredArgsConstructor

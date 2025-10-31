@@ -2,6 +2,7 @@ package com.aniket.placementcell.config;
 
 import com.aniket.placementcell.security.CustomUserDetailsService;
 import com.aniket.placementcell.security.JwtAuthenticationFilter;
+import com.aniket.placementcell.security.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -39,10 +40,7 @@ public class SecurityConfig {
         return provider;
     }
 
-    @Bean
-    public AuthenticationProvider jwtAuthenticationProvider() {
-        return new JwtAuthenticationProvider(); // custom provider (see below)
-    }
+
 
     @Bean
     public AuthenticationManager authenticationManager(
