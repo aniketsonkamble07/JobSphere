@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "student")
@@ -25,8 +26,7 @@ public class Student {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -79,4 +79,10 @@ public class Student {
 
     @Column(name = "register_time")
     private LocalDateTime registerTime = LocalDateTime.now();
+    @OneToOne
+    @JoinColumn(name = "username", referencedColumnName = "username")
+    private User user;
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AppliedJob> appliedList;
+
 }

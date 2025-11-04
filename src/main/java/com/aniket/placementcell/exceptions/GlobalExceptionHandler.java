@@ -1,11 +1,16 @@
 package com.aniket.placementcell.exceptions;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
-@RestControllerAdvice   // Works for both @RestController and @Controller
+
+
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // 🔹 Handle AlreadyPresentException (duplicate CRN or Email)
@@ -18,9 +23,31 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    // 🔹 Handle all other unexpected exceptions
+    // 🔹 Handle Resource Not Found (404 errors)
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<APIError> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        APIError error = new APIError(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    // 🔹 Handle favicon.ico requests specifically
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<APIError> handleGenericException(Exception ex) {
+    public ResponseEntity<APIError> handleGenericException(Exception ex, HttpServletRequest request) {
+
+        // Check if it's a favicon request
+        if (request.getRequestURI().endsWith("/favicon.ico")) {
+            // Return 404 instead of 500 for favicon
+            APIError error = new APIError(
+                    HttpStatus.NOT_FOUND.value(),
+                    "Favicon not found"
+            );
+            return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        }
+
+        // For all other exceptions, return 500
         APIError error = new APIError(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Something went wrong! " + ex.getMessage()

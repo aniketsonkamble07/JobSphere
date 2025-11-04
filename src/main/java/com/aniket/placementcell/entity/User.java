@@ -17,7 +17,5 @@ public class User {
     private String password;
     private String role;
 
-    @OneToOne
-    @JoinColumn(name = "crn_number", referencedColumnName = "crn_number")
-    private Student student;
+
 }

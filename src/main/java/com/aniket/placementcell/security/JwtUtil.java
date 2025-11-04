@@ -2,41 +2,46 @@ package com.aniket.placementcell.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private static final String SECRET = "MySuperSecretKeyForJwtGenerationInPlacementCell12345"; // Use env var in real apps
-    private static final long EXPIRATION_TIME = 86400000; // 1 day in ms
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    @Value("${jwt.secret}")
+    private String secretKey;
 
-    // ✅ Generate token for a given username
+    private static final long EXPIRATION_TIME = 86400000; // 1 day in ms
+
+    // ✅ Key cannot be built at field declaration because secretKey loads later
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
+
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // ✅ Extract username (subject) from JWT
     public String extractUsername(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJws(token)  // <-- FIXED HERE
+                .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
     }
 
-    // ✅ Check if token is expired
     public boolean isTokenExpired(String token) {
         Date expiration = Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -44,9 +49,16 @@ public class JwtUtil {
         return expiration.before(new Date());
     }
 
-    // ✅ Validate token with username
     public boolean validateToken(String token, String username) {
         String tokenUsername = extractUsername(token);
         return (tokenUsername.equals(username)) && !isTokenExpired(token);
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Login - College Placement Cell</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Prevent favicon errors -->
+    <link rel="icon" href="data:,">
     <style>
         /* Base Styles */
         * {
@@ -74,7 +75,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
+            /* Using a reliable Unsplash source URL */
+            background: url('https://source.unsplash.com/random/800x600/?university,campus,education') no-repeat center center/cover;
             opacity: 0.1;
         }
 
@@ -172,6 +174,25 @@
             font-size: 14px;
             margin-top: 5px;
             display: none;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background-color: #d1edff;
+            color: #0c5460;
+            border: 1px solid #b8daff;
         }
 
         .remember-forgot {
@@ -386,35 +407,43 @@
         </div>
 
         <div class="login-body">
-            <form id="loginForm " th:action="@{/pvg/login}">
+            <!-- Error Message Display -->
+            <div th:if="${error}" class="alert alert-error" style="display: block;">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${error}">Invalid credentials</span>
+            </div>
+
+            <!-- Success Message Display -->
+            <div th:if="${param.registered}" class="alert alert-success" style="display: block;">
+                <i class="fas fa-check-circle"></i>
+                Registration successful! Please login with your credentials.
+            </div>
+
+            <form id="loginForm" th:action="@{/pvg/login}" method="post" th:object="${loginRequest}">
                 <div class="form-group">
-                    <label for="username">Email</label>
-                    <div class="input-group" >
-                        <div class="icon">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <input type="text" id="username" class="form-control" name="username" placeholder="Enter your CRN or email" required>
+                    <label for="username">Email or CRN</label>
+                    <div class="input-group">
+                        <div class="icon"><i class="fas fa-user"></i></div>
+                        <input type="text" id="username" th:field="*{username}" class="form-control" placeholder="Enter your CRN or email" required>
                     </div>
-                    <div class="error-message" id="usernameError">Please enter a valid  email</div>
+                    <div class="error-message" id="usernameError">Please enter a valid email or CRN</div>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-group">
-                        <div class="icon">
-                            <i class="fas fa-lock"></i>
-                        </div>
-                        <input type="password" id="password" class="form-control" name="password" placeholder="Enter your password" required>
+                        <div class="icon"><i class="fas fa-lock"></i></div>
+                        <input type="password" id="password" th:field="*{password}" class="form-control" placeholder="Enter your password" required>
                     </div>
                     <div class="error-message" id="passwordError">Please enter your password</div>
                 </div>
 
                 <div class="remember-forgot">
                     <div class="checkbox-group">
-                        <input type="checkbox" id="remember">
+                        <input type="checkbox" id="remember" name="remember">
                         <label for="remember">Remember me</label>
                     </div>
-                    <a href="forgot-password.html" class="forgot-password" method="post" th:object="${loginRequest}">Forgot Password?</a>
+                    <a th:href="@{/pvg/forgot-password}" class="forgot-password">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="btn btn-college">Login to Portal</button>
@@ -436,155 +465,140 @@
             </div>
 
             <div class="login-footer">
-                <p>Don't have an account? <a href="student-registration.html" class="register-link">Register here</a></p>
+                <p>Don't have an account? <a th:href="@{/pvg/student/register}" class="register-link">Register here</a></p>
             </div>
         </div>
     </div>
 </div>
 
 <div class="back-home">
-    <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    <a th:href="@{/}"><i class="fas fa-arrow-left"></i> Back to Home</a>
 </div>
 
 <script>
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const errorAlert = document.querySelector('.alert-error');
 
-        // Reset error states
-        resetErrors();
-
-        // Get form values
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        let isValid = true;
-
-        // Validate username (CRN or email)
-        if (!username) {
-            showError('username', 'Please enter your CRN number or email');
-            isValid = false;
-        } else if (username.includes('@')) {
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(username)) {
-                showError('username', 'Please enter a valid email address');
-                isValid = false;
-            }
-        } else {
-            // CRN validation (numeric)
-            const crnRegex = /^\d+$/;
-            if (!crnRegex.test(username)) {
-                showError('username', 'Please enter a valid CRN number');
-                isValid = false;
-            }
-        }
-
-        // Validate password
-        if (!password) {
-            showError('password', 'Please enter your password');
-            isValid = false;
-        } else if (password.length < 6) {
-            showError('password', 'Password must be at least 6 characters');
-            isValid = false;
-        }
-
-        if (isValid) {
-            // In a real application, you would send the data to the server here
-            // For demo purposes, we'll just show a success message
-
-            // Show loading state
-            const submitBtn = document.querySelector('.btn');
-            const originalText = submitBtn.textContent;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
-            submitBtn.disabled = true;
-
-            // Simulate API call
+        // Hide error alert after 5 seconds
+        if (errorAlert && errorAlert.style.display === 'block') {
             setTimeout(() => {
-                alert('Login successful! Redirecting to your dashboard...');
-                // In a real application, you would redirect to the dashboard
-                // window.location.href = 'student-dashboard.html';
-
-                // Reset button
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 1500);
+                errorAlert.style.display = 'none';
+            }, 5000);
         }
-    });
 
-    function resetErrors() {
-        const errorMessages = document.querySelectorAll('.error-message');
-        errorMessages.forEach(error => {
-            error.style.display = 'none';
+        loginForm.addEventListener('submit', function(e) {
+            // Client-side validation
+            if (!validateForm()) {
+                e.preventDefault();
+            }
+            // If validation passes, form will submit to Spring Boot
         });
 
-        const formControls = document.querySelectorAll('.form-control');
-        formControls.forEach(control => {
-            control.classList.remove('error');
-        });
-    }
+        function validateForm() {
+            resetErrors();
 
-    function showError(fieldId, message) {
-        const errorElement = document.getElementById(`${fieldId}Error`);
-        const fieldElement = document.getElementById(fieldId);
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-        if (errorElement && fieldElement) {
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-            fieldElement.classList.add('error');
+            let isValid = true;
 
-            // Scroll to the error
-            fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-    // Real-time validation
-    document.getElementById('username').addEventListener('blur', function() {
-        const username = this.value.trim();
-
-        if (username) {
-            if (username.includes('@')) {
+            // Validate username (CRN or email)
+            if (!username) {
+                showError('username', 'Please enter your CRN number or email');
+                isValid = false;
+            } else if (username.includes('@')) {
+                // Email validation
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(username)) {
                     showError('username', 'Please enter a valid email address');
-                } else {
-                    resetFieldError('username');
+                    isValid = false;
                 }
             } else {
+                // CRN validation (numeric)
                 const crnRegex = /^\d+$/;
                 if (!crnRegex.test(username)) {
                     showError('username', 'Please enter a valid CRN number');
-                } else {
-                    resetFieldError('username');
+                    isValid = false;
                 }
             }
+
+            // Validate password
+            if (!password) {
+                showError('password', 'Please enter your password');
+                isValid = false;
+            } else if (password.length < 6) {
+                showError('password', 'Password must be at least 6 characters');
+                isValid = false;
+            }
+
+            return isValid;
         }
-    });
 
-    document.getElementById('password').addEventListener('blur', function() {
-        const password = this.value.trim();
+        function resetErrors() {
+            const errorMessages = document.querySelectorAll('.error-message');
+            errorMessages.forEach(error => {
+                error.style.display = 'none';
+            });
 
-        if (password && password.length < 6) {
-            showError('password', 'Password must be at least 6 characters');
-        } else if (password) {
-            resetFieldError('password');
+            const formControls = document.querySelectorAll('.form-control');
+            formControls.forEach(control => {
+                control.classList.remove('error');
+            });
         }
-    });
 
-    function resetFieldError(fieldId) {
-        const errorElement = document.getElementById(`${fieldId}Error`);
-        const fieldElement = document.getElementById(fieldId);
+        function showError(fieldId, message) {
+            const errorElement = document.getElementById(`${fieldId}Error`);
+            const fieldElement = document.getElementById(fieldId);
 
-        if (errorElement && fieldElement) {
-            errorElement.style.display = 'none';
-            fieldElement.classList.remove('error');
+            if (errorElement && fieldElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                fieldElement.classList.add('error');
+                fieldElement.focus();
+            }
         }
-    }
 
-    // Demo credentials for testing
-    document.addEventListener('DOMContentLoaded', function() {
-        // Pre-fill with demo credentials (remove in production)
-        document.getElementById('username').value = '20230001';
-        document.getElementById('password').value = 'demo123';
+        // Real-time validation
+        document.getElementById('username').addEventListener('blur', function() {
+            const username = this.value.trim();
+            if (username) {
+                if (username.includes('@')) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(username)) {
+                        showError('username', 'Please enter a valid email address');
+                    } else {
+                        resetFieldError('username');
+                    }
+                } else {
+                    const crnRegex = /^\d+$/;
+                    if (!crnRegex.test(username)) {
+                        showError('username', 'Please enter a valid CRN number');
+                    } else {
+                        resetFieldError('username');
+                    }
+                }
+            }
+        });
+
+        document.getElementById('password').addEventListener('blur', function() {
+            const password = this.value.trim();
+            if (password && password.length < 6) {
+                showError('password', 'Password must be at least 6 characters');
+            } else if (password) {
+                resetFieldError('password');
+            }
+        });
+
+        function resetFieldError(fieldId) {
+            const errorElement = document.getElementById(`${fieldId}Error`);
+            const fieldElement = document.getElementById(fieldId);
+
+            if (errorElement && fieldElement) {
+                errorElement.style.display = 'none';
+                fieldElement.classList.remove('error');
+            }
+        }
     });
 </script>
 </body>

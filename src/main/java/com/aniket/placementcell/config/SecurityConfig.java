@@ -27,7 +27,7 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         // Strength is the log2 of rounds: 10-12 is common; 12 is stronger but slower.
-        return new BCryptPasswordEncoder(12);
+        return new BCryptPasswordEncoder();
     }
 
 
@@ -64,7 +64,23 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // <--- Disable CSRF to allow POST without token
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/pvg/register", "/pvg/login", "/pvg/*").permitAll()
+                        .requestMatchers(
+                                "/pvg/login",
+                                "/pvg/home",
+                                "/pvg/student/register",
+                                "/pvg/student/home",
+                                "/pvg/student/job/{id}",
+                                "/officer/registerOfficer",
+                                "/jobs/add",
+                                // Static resources
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/webjars/**",
+                                "/favicon.ico",
+                                "/error",
+                                "/static/**"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
