@@ -61,5 +61,5 @@ public String registerStudentPage(Model model) {
     }
 
 
-        }
+}
 

@@ -2,11 +2,15 @@ package com.aniket.placementcell.service;
 
 import com.aniket.placementcell.dto.AppliedDTO;
 import com.aniket.placementcell.dto.JobPostingResponseDTO;
+import com.aniket.placementcell.dto.JobValidationResponse;
 import com.aniket.placementcell.dto.StudentResponseDTO;
+import com.aniket.placementcell.entity.AppliedJob;
 import com.aniket.placementcell.entity.JobPosting;
 import com.aniket.placementcell.entity.Student;
+import com.aniket.placementcell.enums.ApplicationStatus;
 import com.aniket.placementcell.enums.JobStatus;
 import com.aniket.placementcell.exceptions.JobIdNotFoundException;
+import com.aniket.placementcell.repository.AppliedJobRepository;
 import com.aniket.placementcell.repository.JobPostRepository;
 import com.aniket.placementcell.repository.StudentRepository;
 import com.aniket.placementcell.repository.UserRepository;
@@ -15,26 +19,30 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Service
 public class StudentService {
 
     @Autowired
-   private StudentRepository student;
+   private StudentRepository studentRepository;
 
     @Autowired
     private UserRepository userRepository;
     @Autowired
     private JobPostRepository jobPostRepository;
 
+    @Autowired
+    private AppliedJobRepository appliedJobRepository;
     public StudentResponseDTO sendProfile(String name)
     {
         StudentResponseDTO dto=new StudentResponseDTO();
 
         if(userRepository.existsByUsername(name))
         {
-            Student s=student.findByEmail(name).orElseThrow(()->new UsernameNotFoundException(name+" Not found!!"));
+            Student s=studentRepository.findByEmail(name).orElseThrow(()->new UsernameNotFoundException(name+" Not found!!"));
             dto.setName(s.getName());
             dto.setCrnNumber(s.getCrnNumber());
             dto.setEmail(s.getEmail());
@@ -135,5 +143,50 @@ public class StudentService {
         dto.setPublishedAt(job.getPublishedAt());
 
         return dto;
+    }
+
+
+    public JobValidationResponse checkCredentialsOfJobId(String jobId, String username) {
+        Student student = studentRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
+
+        JobPosting job = jobPostRepository.findByJobId(jobId)
+                .orElseThrow(() -> new JobIdNotFoundException(jobId + " not found. Something went wrong!!!"));
+
+        // 1️⃣ Check application deadline
+        if (job.getApplicationDeadline().isBefore(LocalDate.now())) {
+            return new JobValidationResponse(false, "Application deadline has already passed.");
+        }
+
+        // 2️⃣ Check branch eligibility
+        boolean branchAllowed = job.getRequiredBranches().stream()
+                .anyMatch(branch -> branch == student.getBranch());
+
+        if (!branchAllowed) {
+            return new JobValidationResponse(false, "Your branch is not eligible for this job.");
+        }
+
+
+        if (student.getCgpa() < job.getRequiredCGPA()) {
+            return new JobValidationResponse(false, "Your CGPA does not meet the minimum requirement ("
+                    + job.getRequiredCGPA() + ").");
+        }
+
+        AppliedJob appliedJob=new AppliedJob();
+        appliedJob.setAppliedDate(LocalDateTime.now());
+        appliedJob.setJobPosting(job);
+        appliedJob.setStudent(student);
+        appliedJob.setStatus(ApplicationStatus.PENDING);
+
+appliedJobRepository.save(appliedJob);
+
+
+        return new JobValidationResponse(true, "You are eligible to apply for this job.");
+    }
+
+    public Student getStudentByEmail(String username)
+    {
+       Student s= studentRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException(username+" not found . Something went wrong !!"));
+    return s;
     }
 }
