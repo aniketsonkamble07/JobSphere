@@ -1,13 +1,12 @@
 package com.aniket.placementcell.service;
 
-import com.aniket.placementcell.dto.StudentRequestDto;
+import com.aniket.placementcell.dto.StudentRequestDTO;
 import com.aniket.placementcell.entity.Student;
 import com.aniket.placementcell.entity.User;
 import com.aniket.placementcell.exceptions.AlreadyPresentException;
 import com.aniket.placementcell.repository.StudentRepository;
 import com.aniket.placementcell.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,7 @@ public class RegisterStudentService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void registerStudent(StudentRequestDto dto) {
+    public void registerStudent(StudentRequestDTO dto) {
         System.out.println("[DEBUG] Starting registration for: " + dto.getEmail());
 
         validateStudent(dto);
@@ -60,7 +59,7 @@ public class RegisterStudentService {
         System.out.println("[DEBUG] Student saved with CRN: " + s.getCrnNumber());
     }
 
-    private void validateStudent(StudentRequestDto dto) {
+    private void validateStudent(StudentRequestDTO dto) {
         if (studentRepository.existsByCrnNumber(dto.getCrnNumber())) {
             throw new AlreadyPresentException("CRN Number " + dto.getCrnNumber() + " already present!!");
         }

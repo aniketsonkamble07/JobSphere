@@ -598,7 +598,7 @@
                             <p><strong>CGPA:</strong> <span th:text="${student.cgpa != null ? student.cgpa : 'N/A'}">N/A</span></p>
                             <p><strong>10th Marks:</strong> <span th:text="${student.mark10th != null ? student.mark10th : 'N/A'}">N/A</span></p>
                             <p><strong>12th Marks:</strong> <span th:text="${student.mark12th != null ? student.mark12th : 'N/A'}">N/A</span></p>
-                            <p th:if="${student.diplomaMark != null}"><strong>Diploma Marks:</strong> <span th:text="${student.diplomaMark}">N/A</span></p>
+                            <p th:if="${student.diplomaMarks != null}"><strong>Diploma Marks:</strong> <span th:text="${student.diplomaMarks}">N/A</span></p>
                         </div>
                     </div>
                 </div>
@@ -609,7 +609,8 @@
         <div class="dashboard-section" id="profile">
             <div class="section-header">
                 <h2>My Profile</h2>
-                <button class="btn btn-primary">Edit Profile</button>
+
+                <button class="btn btn-primary">  <a th:href="@{/pvg/student/update-profile/{username}(username=${student.email})}">Edit Profile</a></button>
             </div>
             <div class="profile-container">
                 <div class="profile-sidebar">
@@ -678,9 +679,9 @@
                             <div class="detail-label">12th Marks</div>
                             <div class="detail-value" th:text="${student.mark12th != null ? student.mark12th : 'N/A'}">N/A</div>
                         </div>
-                        <div class="detail-item" th:if="${student.diplomaMark != null}">
+                        <div class="detail-item" th:if="${student.diplomaMarks != null}">
                             <div class="detail-label">Diploma Marks</div>
-                            <div class="detail-value" th:text="${student.diplomaMark}">N/A</div>
+                            <div class="detail-value" th:text="${student.diplomaMarks}">N/A</div>
                         </div>
                     </div>
                     <div class="detail-group">
@@ -780,7 +781,7 @@
                         Job description will appear here...
                     </div>
                     <div class="job-actions">
-                        <button class="btn btn-primary">Apply Now</button>
+                        <button class="btn btn-primary"><a th:href="@{/pvg/student/job/apply/{jobId}(jobId=${job.jobId})}" class="btn btn-outline">Apply Now</a></button>
                         <a th:href="@{/pvg/student/job/details/{jobId}(jobId=${job.jobId})}" class="btn btn-outline">View Details</a>
                     </div>
                 </div>

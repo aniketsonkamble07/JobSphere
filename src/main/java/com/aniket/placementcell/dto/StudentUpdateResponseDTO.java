@@ -6,10 +6,8 @@ import com.aniket.placementcell.enums.PlacementStatus;
 import com.aniket.placementcell.enums.StudentYear;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class StudentResponseDTO {
+public class StudentUpdateResponseDTO {
     private  String name;
     private Long crnNumber;
     private String email;
@@ -30,7 +28,5 @@ public class StudentResponseDTO {
     private  Double salary;
     private String remarks;
     private Integer passingYear;
-private StudentYear year;
-private List<AppliedDTO> appliedDTOList;
-
+    private StudentYear year;
 }

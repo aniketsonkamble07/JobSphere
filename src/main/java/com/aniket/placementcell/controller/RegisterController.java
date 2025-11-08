@@ -1,7 +1,6 @@
 package com.aniket.placementcell.controller;
 
-import com.aniket.placementcell.dto.JobPostingRequestDTO;
-import com.aniket.placementcell.dto.StudentRequestDto;
+import com.aniket.placementcell.dto.StudentRequestDTO;
 import com.aniket.placementcell.service.RegisterStudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,14 +46,14 @@ public class RegisterController
     @GetMapping("/register")
 public String registerStudentPage(Model model) {
     System.out.println("[DEBUG] GET /pvg/register called");
-        model.addAttribute("studentRequestDTO", new StudentRequestDto());
+        model.addAttribute("studentRequestDTO", new StudentRequestDTO());
 
 
         return "register"; // Thymeleaf will render register.html
 }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute StudentRequestDto dto, BindingResult result) {
+    public String register(@Valid @ModelAttribute StudentRequestDTO dto, BindingResult result) {
         if(result.hasErrors()) return "register";
         service.registerStudent(dto);
         return "redirect:/pvg/student/home";

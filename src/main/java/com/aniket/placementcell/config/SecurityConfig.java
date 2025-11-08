@@ -69,7 +69,9 @@ public class SecurityConfig {
                                 "/pvg/home",
                                 "/pvg/student/register",
                                 "/pvg/student/home",
+                                "/pvg/student/update-profile/{username}",
                                 "/pvg/student/job/{id}",
+                                "/pvg/student/job/apply/{id}",
                                 "/officer/registerOfficer",
                                 "/jobs/add",
                                 // Static resources

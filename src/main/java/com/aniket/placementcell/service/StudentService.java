@@ -1,9 +1,6 @@
 package com.aniket.placementcell.service;
 
-import com.aniket.placementcell.dto.AppliedDTO;
-import com.aniket.placementcell.dto.JobPostingResponseDTO;
-import com.aniket.placementcell.dto.JobValidationResponse;
-import com.aniket.placementcell.dto.StudentResponseDTO;
+import com.aniket.placementcell.dto.*;
 import com.aniket.placementcell.entity.AppliedJob;
 import com.aniket.placementcell.entity.JobPosting;
 import com.aniket.placementcell.entity.Student;
@@ -20,14 +17,13 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 @Service
 public class StudentService {
 
     @Autowired
-   private StudentRepository studentRepository;
+    private StudentRepository studentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -36,6 +32,7 @@ public class StudentService {
 
     @Autowired
     private AppliedJobRepository appliedJobRepository;
+
     public StudentResponseDTO sendProfile(String name)
     {
         StudentResponseDTO dto=new StudentResponseDTO();
@@ -55,26 +52,26 @@ public class StudentService {
             dto.setCgpa(s.getCgpa());
             dto.setMark10th(s.getMark10th());
             dto.setMark12th(s.getMark12th());
-            dto.setDiplomaMark(s.getDiplomaMarks());
+            dto.setDiplomaMarks(s.getDiplomaMarks());
 
             dto.setPlacementStatus(s.getPlacementStatus());
             dto.setCompanyName(s.getCompanyName());
-         dto.setAppliedDTOList(
-                 s.getAppliedList().stream()
-                         .map(applied -> {
-                             JobPosting job = applied.getJobPosting();
-                             AppliedDTO appliedDTO = new AppliedDTO();
-                             appliedDTO.setJobId(job.getId());
-                             appliedDTO.setTitle(job.getTitle());
-                             appliedDTO.setCompanyName(job.getCompanyName());
-                             appliedDTO.setLocation(job.getLocation());
-                             appliedDTO.setStatus(job.getStatus());
-                             appliedDTO.setAppliedDate(applied.getAppliedDate());
-                             appliedDTO.setApplicationStatus(applied.getStatus().toString());
-                             return appliedDTO;
-                         })
-                         .toList()
-         );
+            dto.setAppliedDTOList(
+                    s.getAppliedList().stream()
+                            .map(applied -> {
+                                JobPosting job = applied.getJobPosting();
+                                AppliedDTO appliedDTO = new AppliedDTO();
+                                appliedDTO.setJobId(job.getId());
+                                appliedDTO.setTitle(job.getTitle());
+                                appliedDTO.setCompanyName(job.getCompanyName());
+                                appliedDTO.setLocation(job.getLocation());
+                                appliedDTO.setStatus(job.getStatus());
+                                appliedDTO.setAppliedDate(applied.getAppliedDate());
+                                appliedDTO.setApplicationStatus(applied.getStatus().toString());
+                                return appliedDTO;
+                            })
+                            .toList()
+            );
 
         }
 
@@ -146,47 +143,104 @@ public class StudentService {
     }
 
 
-    public JobValidationResponse checkCredentialsOfJobId(String jobId, String username) {
+
+
+    public StudentUpdateResponseDTO sendStudentForUpdate(String username) {
         Student student = studentRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username + " not found"));
+                .orElse(null); // return null if student not found
 
-        JobPosting job = jobPostRepository.findByJobId(jobId)
-                .orElseThrow(() -> new JobIdNotFoundException(jobId + " not found. Something went wrong!!!"));
-
-        // 1️⃣ Check application deadline
-        if (job.getApplicationDeadline().isBefore(LocalDate.now())) {
-            return new JobValidationResponse(false, "Application deadline has already passed.");
+        if (student == null) {
+            return null;
         }
 
-        // 2️⃣ Check branch eligibility
-        boolean branchAllowed = job.getRequiredBranches().stream()
-                .anyMatch(branch -> branch == student.getBranch());
+        // Map entity to DTO
+        StudentUpdateResponseDTO dto = new StudentUpdateResponseDTO();
+        dto.setCrnNumber(student.getCrnNumber());
+        dto.setName(student.getName());
+        dto.setEmail(student.getEmail());
 
-        if (!branchAllowed) {
-            return new JobValidationResponse(false, "Your branch is not eligible for this job.");
-        }
-
-
-        if (student.getCgpa() < job.getRequiredCGPA()) {
-            return new JobValidationResponse(false, "Your CGPA does not meet the minimum requirement ("
-                    + job.getRequiredCGPA() + ").");
-        }
-
-        AppliedJob appliedJob=new AppliedJob();
-        appliedJob.setAppliedDate(LocalDateTime.now());
-        appliedJob.setJobPosting(job);
-        appliedJob.setStudent(student);
-        appliedJob.setStatus(ApplicationStatus.PENDING);
-
-appliedJobRepository.save(appliedJob);
-
-
-        return new JobValidationResponse(true, "You are eligible to apply for this job.");
+        dto.setBranch(student.getBranch());
+        dto.setYear(student.getYear());
+        dto.setPassingYear(student.getPassingYear());
+        dto.setMobileNumber(student.getMobileNumber());
+        dto.setCgpa(student.getCgpa());
+        dto.setMark10th(student.getMark10th());
+        dto.setMark12th(student.getMark12th());
+        dto.setDiplomaMarks(student.getDiplomaMarks());
+        dto.setAggregateMarks(student.getAggregateMarks());
+        dto.setYearDown(student.getYearDown());
+        dto.setActiveBacklog(student.getActiveBacklog());
+        dto.setPlacementStatus(student.getPlacementStatus());
+        dto.setRemarks(student.getRemarks());
+        dto.setGender(student.getGender());
+        dto.setCompanyName(student.getCompanyName());
+        dto.setSalary(student.getSalary());
+        return dto;
     }
 
-    public Student getStudentByEmail(String username)
+    // Update student profile from DTO
+
+    public void updateStudentProfile(StudentUpdateRequestDTO dto) {
+        Student student = studentRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        // Update fields
+        student.setCrnNumber(dto.getCrnNumber());
+        student.setName(dto.getName());
+        student.setEmail(dto.getEmail());
+
+        student.setBranch(dto.getBranch());
+        student.setYear(dto.getYear());
+        student.setPassingYear(dto.getPassingYear());
+        student.setMobileNumber(dto.getMobileNumber());
+        student.setCgpa(dto.getCgpa());
+        student.setMark10th(dto.getMark10th());
+        student.setMark12th(dto.getMark12th());
+        student.setDiplomaMarks(dto.getDiplomaMarks());
+        student.setAggregateMarks(dto.getAggregateMarks());
+        student.setYearDown(dto.getYearDown());
+        student.setActiveBacklog(dto.getActiveBacklog());
+        student.setPlacementStatus(dto.getPlacementStatus());
+        student.setRemarks(dto.getRemarks());
+        student.setGender(dto.getGender());
+        student.setCompanyName(dto.getCompanyName());
+        student.setSalary(dto.getSalary());
+
+        studentRepository.save(student); // persist changes
+    }
+
+
+    public String applyForJob(String jobId, String username)
     {
-       Student s= studentRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException(username+" not found . Something went wrong !!"));
-    return s;
+        Student s=studentRepository.findByEmail(username).orElseThrow(()-> new UsernameNotFoundException("Username : "+ username +" not found!!"));
+        Long id = Long.parseLong(jobId);
+        JobPosting jobPosting = jobPostRepository.findById(id)
+                .orElseThrow(() -> new JobIdNotFoundException("Job with ID " + jobId + " not found!!"));
+
+        if (jobPosting.getApplicationDeadline().isBefore(LocalDate.now())) {
+            return "Deadline is completed";
+        }
+
+        if(jobPosting.getRequiredCGPA() >=s.getCgpa())
+        {
+            return "Your cga is less than required cgpa ";
+        }
+        if (!(jobPosting.getRequiredBranches().stream()
+                .anyMatch(branch -> branch.equals(s.getBranch())))) {
+            return "Your branch does not match with required branch";
+        }
+        boolean alreadyApplied = appliedJobRepository.existsByStudentAndJobPosting(s, jobPosting);
+        if (alreadyApplied) {
+            return "You have already applied for this job";
+        }
+
+        // Save applied job
+        AppliedJob appliedJob = new AppliedJob(jobPosting, s, LocalDateTime.now(), ApplicationStatus.APPLIED);
+        appliedJobRepository.save(appliedJob);
+
+        return "Applied successfully!";
     }
-}
+    }
+
+
+

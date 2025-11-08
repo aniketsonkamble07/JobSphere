@@ -7,10 +7,8 @@ import com.aniket.placementcell.enums.StudentYear;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-public class StudentRequestDto {
+public class StudentUpdateRequestDTO {
     @NotNull(message = "CRN number is required")
     private Long crnNumber;
 
@@ -20,8 +18,8 @@ public class StudentRequestDto {
     @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters long")
+
+
     private String password;
 
     @NotNull(message = "Branch is required")
@@ -74,8 +72,4 @@ public class StudentRequestDto {
     private String companyName;
 
     private Double salary;
-
-    private LocalDateTime registerTime = LocalDateTime.now();
-
-
 }

@@ -1,17 +1,15 @@
 package com.aniket.placementcell.controller;
 
 import com.aniket.placementcell.dto.JobPostingResponseDTO;
-import com.aniket.placementcell.dto.JobValidationResponse;
-import com.aniket.placementcell.dto.StudentRequestDto;
 import com.aniket.placementcell.dto.StudentResponseDTO;
+import com.aniket.placementcell.dto.StudentUpdateRequestDTO;
+import com.aniket.placementcell.dto.StudentUpdateResponseDTO;
 import com.aniket.placementcell.entity.Student;
 import com.aniket.placementcell.entity.User;
 import com.aniket.placementcell.repository.StudentRepository;
 import com.aniket.placementcell.repository.UserRepository;
 import com.aniket.placementcell.service.StudentService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
@@ -26,7 +24,7 @@ import java.util.List;
 public class StudentHomeController {
 
     @Autowired
-    private StudentService studentService;
+    private StudentService service;
 
     @GetMapping("/home")
     public String studentHomePage(Authentication authentication, Model model) {
@@ -35,8 +33,8 @@ public class StudentHomeController {
         }
 
         String user = authentication.getName();
-        StudentResponseDTO student = studentService.sendProfile(user);
-        List<JobPostingResponseDTO> jobs = studentService.getAllJobPosting();
+        StudentResponseDTO student = service.sendProfile(user);
+        List<JobPostingResponseDTO> jobs = service.getAllJobPosting();
 
         model.addAttribute("student", student);
         model.addAttribute("jobs", jobs); // Changed from "job" to "jobs" for clarity
@@ -50,69 +48,40 @@ public class StudentHomeController {
             return "redirect:/pvg/login";
         }
 
-        JobPostingResponseDTO job = studentService.getJobPosting(jobId);
+        JobPostingResponseDTO job = service.getJobPosting(jobId);
         model.addAttribute("job", job);
 
         return "job_details";
     }
 
-    @GetMapping("/job/applyJob/{jobId}")
-    public String applyForJob(@PathVariable String jobId,Model model, Authentication authentication)
-    {
-        if(authentication ==null ||!authentication.isAuthenticated())
-        {
-            return "redirect:/pvg/login";
-        }
-        String username=authentication.getName();
-        JobValidationResponse response = studentService.checkCredentialsOfJobId(jobId, username);
-
-        return "student_home";
-    }
-
-
     @GetMapping("/update-profile/{username}")
-    public String showUpdateProfilePage(@PathVariable String username, Model model) {
-        System.out.println("[DEBUG] GET /pvg/student/update-profile/" + username);
-
-        // Fetch existing student
-        StudentResponseDTO student = studentService.getStudentByEmail(username);
-
-        // Map entity to DTO for form
-        StudentRequestDto dto = StudentRequestDto.builder()
-                .name(student.getName())
-                .email(student.getEmail())
-                .branch(student.getBranch())
-                .year(student.getYear())
-                .passingYear(student.getPassingYear())
-                .mobileNumber(student.getMobileNumber())
-                .cgpa(student.getCgpa())
-                .mark10th(student.getMark10th())
-                .mark12th(student.getMark12th())
-                .diplomaMarks(student.getDiplomaMarks())
-                .aggregateMarks(student.getAggregateMarks())
-                .yearDown(student.getYearDown())
-                .activeBacklog(student.getActiveBacklog())
-                .gender(student.getGender())
-                .build();
-
-        model.addAttribute("studentRequestDTO", dto);
-        return "update-profile"; // Thymeleaf page: update-profile.html
+    public String getUserProfile(@PathVariable String username, Model model )
+    {
+         StudentUpdateResponseDTO dto=service.sendStudentForUpdate(username);
+         model.addAttribute("studentResponseDTO",dto);
+         return "updatestudentprofile";
     }
-
-    // 2️⃣ Handle profile update form submission
     @PostMapping("/update-profile/{username}")
-    public String updateProfile(@PathVariable String username,
-                                @Valid @ModelAttribute StudentRequestDto dto,
-                                BindingResult result,
-                                Model model) {
-
-        if(result.hasErrors()) {
-            System.out.println("[DEBUG] Validation errors while updating student profile: " + result.getAllErrors());
-            return "update-profile";
+    public String updateStudentProfile(@ModelAttribute("studentResponseDTO") StudentUpdateRequestDTO dto, BindingResult result)
+    {
+        if (result.hasErrors()) {
+            return "updatestudentprofile"; // Return form with errors
         }
 
-        studentService.updateStudentProfile(username, dto);
-
-        return "redirect:/pvg/student/home"; // redirect after successful update
+         // Ensure username is consistent
+        service.updateStudentProfile(dto); // Save updated data
+        return "redirect:/pvg/student/home";
+    }
+    @GetMapping("/job/apply/{jobId}")
+    public String applyMethod(@PathVariable String jobId, Model model, Authentication authentication)
+    {
+        if(authentication==null)
+        {
+           return"redirect :/pvg/login" ;
+        }
+    String user=authentication.getName();
+      String message= service .applyForJob(jobId,user);
+      model.addAttribute("message",message);
+return "redirect:/pvg/student/home";
     }
 }
